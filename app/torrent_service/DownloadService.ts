@@ -9,6 +9,14 @@ export default class DownloadService {
         this.downloads = new Map();
     }
 
+    public getFile(infoHash: string): TorrentStream.TorrentFile | undefined {
+        const download = this.downloads.get(infoHash);
+        if (download) {
+            return download.getMainFile();
+        }
+        return undefined;
+    }
+
     public addTorrent(magnetUrl: string): Promise<Download> {
         return new Promise((resolve, reject) => {
 
@@ -25,10 +33,13 @@ export default class DownloadService {
                     resolve(alreadyAdded);
                 } else {
                     const engine = torrentStream(parsedTorrent as any, {});
-                    console.log("Added " + parsedTorrent.name + " (" + infoHash + ")");
-                    const download = new Download(engine);
-                    this.downloads.set(infoHash, download);
-                    resolve(download);
+                    engine.on("ready", () => {
+                        console.log("Added " + parsedTorrent.name + " (" + infoHash + ")");
+                        const download = new Download(engine);
+                        this.downloads.set(infoHash, download);
+                        resolve(download);
+                    });
+                    // handle timeout?
                 }
             });
         });
