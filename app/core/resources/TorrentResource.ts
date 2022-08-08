@@ -3,9 +3,9 @@ import { Application, Request, Response, NextFunction } from "express";
 import { constants as HttpConstants } from "http2";
 import pump from "pump";
 
-import Logger from "../misc/Logger";
-import { writeLineWithRequest } from "../misc/Utils";
-import { TorrentService } from "./torrent_service/TorrentService";
+import Logger from "../../misc/Logger";
+import { writeLineWithRequest } from "../../misc/Utils";
+import { TorrentService } from "../services/TorrentService";
 
 const writeLine = Logger.generateLogger("LightsResource");
 
