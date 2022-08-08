@@ -23,11 +23,10 @@ export default class Core {
         const torrentService = new TorrentService();
         const torrentResource = new TorrentResource(torrentService);
 
+        //await torrentService.addTorrent(pulpFiction);
+        //await torrentService.addTorrent(perks);
         await this.initializeExpress(this.configManager.getApiPort());
         torrentResource.initialize(this.app);
-
-        await torrentService.addTorrent(pulpFiction);
-        await torrentService.addTorrent(perks);
     }
 
     private initializeExpress(apiPort: number): Promise<void> {

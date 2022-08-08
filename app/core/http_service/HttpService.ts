@@ -32,7 +32,7 @@ export default class HttpService {
             response.setHeader('Content-Length', file.length)
             if (request.method === 'HEAD')
                 return response.end()
-            pump(file.createReadStream(), response)
+            pump(file.createReadStream() as any, response)
             return
         }
 
@@ -41,7 +41,7 @@ export default class HttpService {
         response.setHeader('Content-Range', 'bytes ' + range.start + '-' + range.end + '/' + file.length)
         if (request.method === 'HEAD')
             return response.end()
-        pump(file.createReadStream(range), response)
+        pump(file.createReadStream(range) as any, response)
     }
 
     private send404Response = (response: http.ServerResponse) => {

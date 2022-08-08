@@ -12,12 +12,12 @@ export class TorrentService {
         this.torrents = new Map();
     }
 
-    public getFile(infoHash: string): TorrentStream.TorrentFile | undefined {
-        const download = this.torrents.get(infoHash);
-        if (download) {
-            return download.getMainFile();
-        }
-        return undefined;
+    public getTorrents(): Torrent[] {
+        return Array.from(this.torrents.values());
+    }
+
+    public getTorrent(infoHash: string) {
+        return this.torrents.get(infoHash);
     }
 
     public addTorrent(magnetUrl: string): Promise<Torrent> {
@@ -32,13 +32,13 @@ export class TorrentService {
                 const { infoHash } = parsedTorrent;
                 const alreadyAdded = this.torrents.get(infoHash)
                 if (alreadyAdded) {
-                    writeLine("Found: " + infoHash, LogLevel.Debug);
+                    writeLine("Found: " + infoHash);
                     resolve(alreadyAdded);
                 } else {
                     const engine = torrentStream(parsedTorrent as any, {});
                     engine.on("ready", () => {
-                        writeLine("Added " + parsedTorrent.name + " (" + infoHash + ")", LogLevel.Debug);
-                        const download = new Torrent(engine);
+                        writeLine("Added " + parsedTorrent.name + " (" + infoHash + ")");
+                        const download = new Torrent(engine, parsedTorrent.name);
                         this.torrents.set(infoHash, download);
                         resolve(download);
                     });

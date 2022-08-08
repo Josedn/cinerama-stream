@@ -1,6 +1,7 @@
 export default class Logger {
     private static instance: Logger;
-    private logLevel: LogLevel;
+
+    private constructor(private logLevel: LogLevel) { }
 
     private static getInstance(): Logger {
         if (this.instance == null) {
@@ -9,8 +10,8 @@ export default class Logger {
         return this.instance;
     }
 
-    static generateLogger(tag: string): (text: string, logLevel: LogLevel) => void {
-        return (text: string, logLevel: LogLevel) => this.writeLine(text, logLevel, tag);
+    static generateLogger(tag: string): (text: string, logLevel?: LogLevel) => void {
+        return (text: string, logLevel?: LogLevel) => this.writeLine(text, logLevel || LogLevel.Debug, tag);
     }
 
     static writeLine(text: string, logLevel: LogLevel, tag: string): void {
@@ -19,10 +20,6 @@ export default class Logger {
 
     static setLogLevel(logLevel: LogLevel): void {
         this.getInstance().setLogLevel(logLevel);
-    }
-
-    private constructor(logLevel: LogLevel) {
-        this.logLevel = logLevel;
     }
 
     private setLogLevel(logLevel: LogLevel) {
