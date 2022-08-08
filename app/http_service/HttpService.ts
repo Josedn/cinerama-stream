@@ -3,11 +3,11 @@ import mime from 'mime';
 import url from 'url';
 import rangeParser from 'range-parser';
 import pump from 'pump';
-import DownloadService from '../torrent_service/DownloadService';
+import { TorrentService } from '../torrent_service/TorrentService';
 
 export default class HttpService {
 
-    constructor(private downloadService: DownloadService) {
+    constructor(private downloadService: TorrentService) {
     }
 
     private continueWithFileResponse = (pathName: string, request: http.IncomingMessage, response: http.ServerResponse) => {

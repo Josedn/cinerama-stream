@@ -1,23 +1,23 @@
 import parseTorrent from 'parse-torrent';
 import torrentStream from 'torrent-stream';
-import Download from './Download';
+import { Torrent } from './Torrent';
 
-export default class DownloadService {
-    private downloads: Map<string, Download>;
+export class TorrentService {
+    private torrents: Map<string, Torrent>;
 
     constructor() {
-        this.downloads = new Map();
+        this.torrents = new Map();
     }
 
     public getFile(infoHash: string): TorrentStream.TorrentFile | undefined {
-        const download = this.downloads.get(infoHash);
+        const download = this.torrents.get(infoHash);
         if (download) {
             return download.getMainFile();
         }
         return undefined;
     }
 
-    public addTorrent(magnetUrl: string): Promise<Download> {
+    public addTorrent(magnetUrl: string): Promise<Torrent> {
         return new Promise((resolve, reject) => {
 
             parseTorrent.remote(magnetUrl, (err, parsedTorrent) => {
@@ -27,7 +27,7 @@ export default class DownloadService {
                     return;
                 }
                 const { infoHash } = parsedTorrent;
-                const alreadyAdded = this.downloads.get(infoHash)
+                const alreadyAdded = this.torrents.get(infoHash)
                 if (alreadyAdded) {
                     console.log("Found " + infoHash);
                     resolve(alreadyAdded);
@@ -35,8 +35,8 @@ export default class DownloadService {
                     const engine = torrentStream(parsedTorrent as any, {});
                     engine.on("ready", () => {
                         console.log("Added " + parsedTorrent.name + " (" + infoHash + ")");
-                        const download = new Download(engine);
-                        this.downloads.set(infoHash, download);
+                        const download = new Torrent(engine);
+                        this.torrents.set(infoHash, download);
                         resolve(download);
                     });
                     // handle timeout?

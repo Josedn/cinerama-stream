@@ -1,4 +1,4 @@
-export default class Download {
+export class Torrent {
     private mainFileIndex: number;
 
     private findIndex() {
