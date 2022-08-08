@@ -37,7 +37,6 @@ export class Torrent {
         const biggestFile = files.reduce(function (a, b) {
             return a.length > b.length ? a : b
         });
-        biggestFile.select();
         return files.indexOf(biggestFile);
     }
 

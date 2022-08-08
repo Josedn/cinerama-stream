@@ -5,6 +5,8 @@ import { Torrent } from './Torrent';
 
 const writeLine = Logger.generateLogger("TorrentService");
 
+const SPEED_LIMIT = 300000;
+
 export class TorrentService {
     private torrents: Map<string, Torrent>;
 
@@ -35,7 +37,7 @@ export class TorrentService {
                     writeLine("Found: " + infoHash);
                     resolve(alreadyAdded);
                 } else {
-                    const engine = torrentStream(parsedTorrent as any, {});
+                    const engine = torrentStream(parsedTorrent as any, { downloadLimit: SPEED_LIMIT });
                     engine.on("ready", () => {
                         writeLine("Added " + parsedTorrent.name + " (" + infoHash + ")");
                         const download = new Torrent(engine, parsedTorrent.name);

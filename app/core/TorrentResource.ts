@@ -14,7 +14,7 @@ export default class TorrentResource {
 
     public initialize(app: Application): void {
         app.get("/", this.getIndex);
-        app.get("/streams", this.listStreams);
+        app.get("/stream", this.listStreams);
         app.post("/stream", this.addStream);
         app.get("/stream/:hash", this.getStreamInfo);
         app.get("/stream/:hash/download", this.performStream);
