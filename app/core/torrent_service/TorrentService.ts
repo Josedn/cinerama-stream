@@ -1,6 +1,9 @@
 import parseTorrent from 'parse-torrent';
 import torrentStream from 'torrent-stream';
+import Logger, { LogLevel } from '../../misc/Logger';
 import { Torrent } from './Torrent';
+
+const writeLine = Logger.generateLogger("TorrentService");
 
 export class TorrentService {
     private torrents: Map<string, Torrent>;
@@ -22,19 +25,19 @@ export class TorrentService {
 
             parseTorrent.remote(magnetUrl, (err, parsedTorrent) => {
                 if (err || !parsedTorrent) {
-                    console.log('Theres an error: ' + err);
+                    writeLine("Error adding torrent: " + err, LogLevel.Warning);
                     reject(err);
                     return;
                 }
                 const { infoHash } = parsedTorrent;
                 const alreadyAdded = this.torrents.get(infoHash)
                 if (alreadyAdded) {
-                    console.log("Found " + infoHash);
+                    writeLine("Found: " + infoHash, LogLevel.Debug);
                     resolve(alreadyAdded);
                 } else {
                     const engine = torrentStream(parsedTorrent as any, {});
                     engine.on("ready", () => {
-                        console.log("Added " + parsedTorrent.name + " (" + infoHash + ")");
+                        writeLine("Added " + parsedTorrent.name + " (" + infoHash + ")", LogLevel.Debug);
                         const download = new Torrent(engine);
                         this.torrents.set(infoHash, download);
                         resolve(download);
