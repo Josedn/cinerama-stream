@@ -13,12 +13,12 @@ export default class TorrentResource {
     constructor(private torrentService: TorrentService) { }
 
     public initialize(app: Application): void {
-        app.get("/", this.getIndex);
         app.get("/stream", this.listStreams);
         app.post("/stream", this.addStream);
         app.get("/stream/:hash", this.getStreamInfo);
         app.get("/stream/:hash/download", this.performStream);
         app.get("/stream/:hash/download/:fileIndex(\\d+)", this.performStream);
+        app.get("*", this.get404);
     }
 
     private listStreams = (req: Request, res: Response, next: NextFunction): void => {
@@ -62,9 +62,9 @@ export default class TorrentResource {
         res.json(torrent.getStats());
     }
 
-    private getIndex = (req: Request, res: Response, next: NextFunction): void => {
-        writeLineWithRequest("Requested index", req, writeLine);
-        res.status(HttpConstants.HTTP_STATUS_NO_CONTENT).send();
+    private get404 = (req: Request, res: Response, next: NextFunction): void => {
+        writeLineWithRequest("Requested 404", req, writeLine);
+        this.sendError(res, "Not found", HttpConstants.HTTP_STATUS_NOT_FOUND);
     }
 
     private performStream = (req: Request, res: Response, next: NextFunction): void => {
