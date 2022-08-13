@@ -69,6 +69,10 @@ export default class TorrentResource {
     }
 
     private get404 = (req: Request, res: Response, next: NextFunction): void => {
+        if (!this.accountService.requestHasFlag(req, AccountFlags.GET_STREAM)) {
+            this.sendError(res, CineError.NOT_AUTHORIZED);
+            return;
+        }
         writeLineWithRequest("Requested 404", req, writeLine);
         this.sendError(res, CineError.PAGE_NOT_FOUND);
     }
