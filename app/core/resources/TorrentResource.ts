@@ -83,9 +83,9 @@ export default class TorrentResource {
         let file = undefined;
 
         if (fileIndex) {
-            file = torrent.getFile(parseInt(fileIndex, 10));
+            file = torrent.getFile(parseInt(fileIndex));
         } else {
-            file = torrent.getMainFile();
+            file = torrent.getFile();
         }
 
         if (!file) {
@@ -104,12 +104,16 @@ export default class TorrentResource {
         res.header("contentFeatures.dlna.org", "DLNA.ORG_OP=01;DLNA.ORG_CI=0;DLNA.ORG_FLAGS=01700000000000000000000000000000")
         res.type(file.name); // Content-Type
 
+        res.on("close", () => {
+            writeLine("Stream closed");
+        });
+
         if (!range) {
             res.header("Content-Length", file.length.toString())
             //if (request.method === "HEAD") {
             //    return res.end()
             //}
-            const fileStream = file.createReadStream();
+            const fileStream = torrent.createReadStream(file);
             writeLine("Sending full stream");
             pump(fileStream, res);
             return;
@@ -122,8 +126,7 @@ export default class TorrentResource {
 
         //if (request.method === "HEAD")
         //    return response.end()
-
-        pump(file.createReadStream(range), res);
+        pump(torrent.createReadStream(file, range), res);
     }
 
     private sendError(res: Response, errorMessage: string, httpErrorCode: number) {
