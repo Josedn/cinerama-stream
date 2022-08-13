@@ -19,7 +19,7 @@ export default class Core {
 
     constructor(private configManager: ConfigManager) {
         this.app = Express();
-        this.accountService = new AccountService();
+        this.accountService = new AccountService(this.configManager.getEnabledAccounts());
         this.torrentService = new TorrentService();
         this.torrentResource = new TorrentResource(this.torrentService, this.accountService);
     }

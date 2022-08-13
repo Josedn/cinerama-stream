@@ -14,8 +14,13 @@ export enum AccountFlags {
 }
 
 export class AccountService {
+    constructor(private enabledAccounts: string[]) { }
+
     private accountHasFlag(token: string, flag: AccountFlags) {
-        return true;
+        if (this.enabledAccounts.find(acc => acc == token)) {
+            return true;
+        }
+        return false;
     }
 
     public requestHasFlag(req: Request, flag: AccountFlags) {

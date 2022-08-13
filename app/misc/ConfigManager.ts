@@ -14,7 +14,11 @@ export default class ConfigManager {
 
     public getApiPort(): number {
         return this.getInt(ConfigKeys.API_PORT, 1232);
-    } 
+    }
+
+    public getEnabledAccounts(): string[] {
+        return this.getString(ConfigKeys.ENABLED_ACCOUNTS, "").split(",").map(str => str.trim());
+    }
 
     private getInt(key: ConfigKeys, failsafe: number): number {
         const value = process.env[key];
