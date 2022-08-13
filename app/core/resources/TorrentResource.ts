@@ -6,11 +6,13 @@ import pump from "pump";
 import Logger from "../../misc/Logger";
 import { writeLineWithRequest } from "../../misc/Utils";
 import { TorrentService } from "../services/TorrentService";
+import { AccountFlags, AccountService } from "../services/AccountService";
+import { CineError } from "./CineError";
 
 const writeLine = Logger.generateLogger("LightsResource");
 
 export default class TorrentResource {
-    constructor(private torrentService: TorrentService) { }
+    constructor(private torrentService: TorrentService, private accountService: AccountService) { }
 
     public initialize(app: Application): void {
         app.get("/stream", this.listStreams);
@@ -22,40 +24,44 @@ export default class TorrentResource {
     }
 
     private listStreams = (req: Request, res: Response, next: NextFunction): void => {
+        if (!this.accountService.requestHasFlag(req, AccountFlags.GET_ALL_STREAMS)) {
+            this.sendError(res, CineError.NOT_AUTHORIZED);
+            return;
+        }
         writeLineWithRequest("Requested list devices", req, writeLine);
         const torrents = this.torrentService.getTorrents();
         res.json(torrents.map(torrent => torrent.getStats()));
     }
 
     private addStream = (req: Request, res: Response, next: NextFunction): void => {
+        if (!this.accountService.requestHasFlag(req, AccountFlags.ADD_STREAM)) {
+            this.sendError(res, CineError.NOT_AUTHORIZED);
+            return;
+        }
         const { magnetUrl } = req.body;
         writeLineWithRequest("Adding new torrent: " + magnetUrl, req, writeLine);
 
         if (!magnetUrl) {
-            const errorMessage = "Invalid body format";
-            writeLine(errorMessage);
-            this.sendError(res, errorMessage, HttpConstants.HTTP_STATUS_BAD_REQUEST);
+            this.sendError(res, CineError.INVALID_BODY_FORMAT);
             return;
         }
 
         this.torrentService.addTorrent(magnetUrl)
             .then(torrent => res.status(HttpConstants.HTTP_STATUS_CREATED).json(torrent.getStats()))
-            .catch(err => {
-                const errorMessage = "Error creating torrent: " + err;
-                writeLine(errorMessage);
-                this.sendError(res, errorMessage, HttpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR);
-            });
+            .catch(err => this.sendError(res, CineError.INVALID_TORRENT, err));
     }
 
     private getStreamInfo = (req: Request, res: Response, next: NextFunction): void => {
+        if (!this.accountService.requestHasFlag(req, AccountFlags.GET_STREAM)) {
+            this.sendError(res, CineError.NOT_AUTHORIZED);
+            return;
+        }
         const { hash } = req.params;
         writeLineWithRequest("Requested stream info for " + hash, req, writeLine);
         const torrent = this.torrentService.getTorrent(hash);
 
         if (!torrent) {
-            const errorMessage = hash + " is not an active torrent";
-            writeLine(errorMessage);
-            this.sendError(res, errorMessage, HttpConstants.HTTP_STATUS_NOT_FOUND);
+            this.sendError(res, CineError.NOT_FOUND_OR_NOT_ACTIVE_TORRENT);
             return;
         }
 
@@ -64,19 +70,21 @@ export default class TorrentResource {
 
     private get404 = (req: Request, res: Response, next: NextFunction): void => {
         writeLineWithRequest("Requested 404", req, writeLine);
-        this.sendError(res, "Not found", HttpConstants.HTTP_STATUS_NOT_FOUND);
+        this.sendError(res, CineError.PAGE_NOT_FOUND);
     }
 
     private performStream = (req: Request, res: Response, next: NextFunction): void => {
+        if (!this.accountService.requestHasFlag(req, AccountFlags.DOWNLOAD_STREAM)) {
+            this.sendError(res, CineError.NOT_AUTHORIZED);
+            return;
+        }
         const { hash, fileIndex } = req.params;
         writeLineWithRequest("Requested stream with hash: " + hash + " and fileIndex: " + (fileIndex || "main"), req, writeLine);
 
         const torrent = this.torrentService.getTorrent(hash);
 
         if (!torrent) {
-            const errorMessage = hash + " is not an active torrent";
-            writeLine(errorMessage);
-            this.sendError(res, errorMessage, HttpConstants.HTTP_STATUS_NOT_FOUND);
+            this.sendError(res, CineError.PAGE_NOT_FOUND);
             return;
         }
 
@@ -89,9 +97,7 @@ export default class TorrentResource {
         }
 
         if (!file) {
-            const errorMessage = "Invalid file index " + fileIndex;
-            writeLine(errorMessage);
-            this.sendError(res, errorMessage, HttpConstants.HTTP_STATUS_NOT_FOUND);
+            this.sendError(res, CineError.INVALID_FILE_INDEX);
             return;
         }
 
@@ -125,11 +131,12 @@ export default class TorrentResource {
         pump(torrent.createReadStream(file, range), res);
     }
 
-    private sendError(res: Response, errorMessage: string, httpErrorCode: number) {
-        res.status(httpErrorCode).json({
+    private sendError(res: Response, cineError: CineError, additional?: string) {
+        res.status(cineError.httpStatusCode).json({
             error: {
-                errorMessage,
-                errorCode: -1
+                errorMessage: cineError.errorMessage,
+                errorCode: cineError.errorCode,
+                additional: additional || null,
             }
         });
     }

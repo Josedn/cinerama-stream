@@ -6,6 +6,7 @@ import ConfigManager from "../misc/ConfigManager";
 import Logger, { LogLevel } from "../misc/Logger";
 import { TorrentService } from "./services/TorrentService";
 import TorrentResource from "./resources/TorrentResource";
+import { AccountService } from "./services/AccountService";
 
 const writeLine = Logger.generateLogger("Core");
 const DELTA_TIME_MS = 5000;
@@ -14,11 +15,13 @@ export default class Core {
     private app: Express.Application;
     private torrentService: TorrentService;
     private torrentResource: TorrentResource;
+    private accountService: AccountService;
 
     constructor(private configManager: ConfigManager) {
         this.app = Express();
+        this.accountService = new AccountService();
         this.torrentService = new TorrentService();
-        this.torrentResource = new TorrentResource(this.torrentService);
+        this.torrentResource = new TorrentResource(this.torrentService, this.accountService);
     }
 
     private ticker = () => {
