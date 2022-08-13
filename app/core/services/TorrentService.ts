@@ -6,7 +6,7 @@ import { Torrent } from './Torrent';
 const writeLine = Logger.generateLogger("TorrentService");
 
 const SPEED_LIMIT_BYTES_PER_SECOND = undefined;
-const TORRENT_IDLE_TIME_MS = 10000;
+const TORRENT_MAX_IDLE_TIME_MS = 30000;
 
 export class TorrentService {
     private torrents: Map<string, Torrent>;
@@ -16,7 +16,7 @@ export class TorrentService {
     }
 
     public tick() {
-        const torrentsToUnload = this.getTorrents().filter(torrent => torrent.getIdleTime() > TORRENT_IDLE_TIME_MS);
+        const torrentsToUnload = this.getTorrents().filter(torrent => torrent.getIdleTime() > TORRENT_MAX_IDLE_TIME_MS);
 
         torrentsToUnload.forEach(torrent => {
             this.torrents.delete(torrent.getInfoHash());

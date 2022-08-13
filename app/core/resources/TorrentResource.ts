@@ -104,10 +104,6 @@ export default class TorrentResource {
         res.header("contentFeatures.dlna.org", "DLNA.ORG_OP=01;DLNA.ORG_CI=0;DLNA.ORG_FLAGS=01700000000000000000000000000000")
         res.type(file.name); // Content-Type
 
-        res.on("close", () => {
-            writeLine("Stream closed");
-        });
-
         if (!range) {
             res.header("Content-Length", file.length.toString())
             //if (request.method === "HEAD") {
