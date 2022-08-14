@@ -4,10 +4,11 @@ import { constants as HttpConstants } from "http2";
 import pump from "pump";
 
 import Logger from "../../misc/Logger";
-import { writeLineWithRequest } from "../../misc/Utils";
+import { streamToString, writeLineWithRequest } from "../../misc/Utils";
 import { TorrentService } from "../services/TorrentService";
 import { AccountFlags, AccountService } from "../services/AccountService";
 import { CineError } from "./CineError";
+import { HASH_CHUNK_SIZE, osHash } from "../services/OSHasherUtil";
 
 const writeLine = Logger.generateLogger("LightsResource");
 
@@ -18,6 +19,7 @@ export default class TorrentResource {
         app.get("/stream", this.listStreams);
         app.post("/stream", this.addStream);
         app.get("/stream/:hash", this.getStreamInfo);
+        app.get("/stream/:hash/hash", this.getHash);
         app.get("/stream/:hash/download", this.performStream);
         app.get("/stream/:hash/download/:fileIndex(\\d+)", this.performStream);
         app.get("*", this.get404);
@@ -77,6 +79,42 @@ export default class TorrentResource {
         this.sendError(res, CineError.PAGE_NOT_FOUND);
     }
 
+    private getHash = (req: Request, res: Response, next: NextFunction): void => {
+        if (!this.accountService.requestHasFlag(req, AccountFlags.DOWNLOAD_STREAM)) {
+            this.sendError(res, CineError.NOT_AUTHORIZED);
+            return;
+        }
+        const { hash } = req.params;
+        writeLineWithRequest("Requested osHash with hash: " + hash, req, writeLine);
+
+        const torrent = this.torrentService.getTorrent(hash);
+
+        if (!torrent) {
+            this.sendError(res, CineError.NOT_FOUND_OR_NOT_ACTIVE_TORRENT);
+            return;
+        }
+
+        const file = torrent.getFile();
+        if (!file) {
+            this.sendError(res, CineError.INVALID_FILE_INDEX);
+            return;
+        }
+
+        const size = file.length;
+        const firstChunk = torrent.createReadStream(file, { start: 0, end: HASH_CHUNK_SIZE - 1 });
+        const lastChunk = torrent.createReadStream(file, { start: size - HASH_CHUNK_SIZE, end: size - 1 });
+        Promise.all([streamToString(firstChunk), streamToString(lastChunk)])
+            .then(buffers => {
+                const [first, second] = buffers;
+                res.json(osHash(first, second, size));
+            }).catch(err => {
+                this.sendError(res, CineError.INVALID_TORRENT, err);
+            }).finally(() => {
+                firstChunk.destroy();
+                lastChunk.destroy();
+            });
+    }
+
     private performStream = (req: Request, res: Response, next: NextFunction): void => {
         if (!this.accountService.requestHasFlag(req, AccountFlags.DOWNLOAD_STREAM)) {
             this.sendError(res, CineError.NOT_AUTHORIZED);
@@ -88,7 +126,7 @@ export default class TorrentResource {
         const torrent = this.torrentService.getTorrent(hash);
 
         if (!torrent) {
-            this.sendError(res, CineError.PAGE_NOT_FOUND);
+            this.sendError(res, CineError.NOT_FOUND_OR_NOT_ACTIVE_TORRENT);
             return;
         }
 
