@@ -24,6 +24,9 @@ export class AccountService {
     }
 
     public requestHasFlag(req: Request, flag: AccountFlags) {
+        if (flag == AccountFlags.DOWNLOAD_STREAM) {
+            return true;
+        }
         const authHeader = req.get(AUTH_HEADER);
         if (authHeader) {
             return this.accountHasFlag(authHeader, flag);
