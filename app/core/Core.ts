@@ -20,7 +20,8 @@ export default class Core {
     constructor(private configManager: ConfigManager) {
         this.app = Express();
         this.accountService = new AccountService(this.configManager.getEnabledAccounts());
-        this.torrentService = new TorrentService();
+        const speedLimit = this.configManager.getSpeedLimitEnabled() ? this.configManager.getSpeedLimitBytesPerSecond() : undefined;
+        this.torrentService = new TorrentService(this.configManager.getTorrentMaxIdleTimeMs(), configManager.getTempFolderLocation(), speedLimit);
         this.torrentResource = new TorrentResource(this.torrentService, this.accountService);
     }
 

@@ -5,18 +5,15 @@ import { Torrent } from './Torrent';
 
 const writeLine = Logger.generateLogger("TorrentService");
 
-const SPEED_LIMIT_BYTES_PER_SECOND = undefined;
-const TORRENT_MAX_IDLE_TIME_MS = 30000;
-
 export class TorrentService {
     private torrents: Map<string, Torrent>;
 
-    constructor() {
+    constructor(private torrentMaxIdleTimeMs: number, private tempFolderLocation: string, private speedLimitBytesPerSecond: number | undefined) {
         this.torrents = new Map();
     }
 
     public tick() {
-        const torrentsToUnload = this.getTorrents().filter(torrent => torrent.getIdleTime() > TORRENT_MAX_IDLE_TIME_MS);
+        const torrentsToUnload = this.getTorrents().filter(torrent => torrent.getIdleTime() > this.torrentMaxIdleTimeMs);
 
         torrentsToUnload.forEach(torrent => {
             this.torrents.delete(torrent.getInfoHash());
@@ -48,7 +45,7 @@ export class TorrentService {
                     alreadyAdded.unIdle();
                     resolve(alreadyAdded);
                 } else {
-                    const engine = torrentStream(parsedTorrent, { downloadLimit: SPEED_LIMIT_BYTES_PER_SECOND });
+                    const engine = torrentStream(parsedTorrent, { downloadLimit: this.speedLimitBytesPerSecond, tmp: this.tempFolderLocation });
                     let verifiedPieces = 0;
                     engine.on('verify', () => {
                         verifiedPieces++;
