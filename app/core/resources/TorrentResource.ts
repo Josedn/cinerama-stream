@@ -7,7 +7,7 @@ import Logger from "../../misc/Logger";
 import { streamToString, writeLineWithRequest } from "../../misc/Utils";
 import { TorrentService } from "../services/TorrentService";
 import { AccountFlags, AccountService } from "../services/AccountService";
-import { CineError } from "./CineError";
+import { CineError } from "cinerama-common/lib/protocol";
 import { HASH_CHUNK_SIZE, osHash } from "../services/OSHasherUtil";
 
 const writeLine = Logger.generateLogger("LightsResource");

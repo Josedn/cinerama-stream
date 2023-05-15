@@ -27,6 +27,7 @@
     "pump": "^3.0.0",
     "response-time": "^2.3.2",
     "torrent-stream": "github:josedn/torrent-stream#802579fa14fec92107f608e55c695b97db4a75ca",
+    "cinerama-common": "github:josedn/cinerama-common#99900290fd6395f55eb48419840119888c08e456",
     "typescript": "^4.7.4"
   },
   "devDependencies": {
