@@ -10,4 +10,4 @@ Create `.env` using `.env.example` as example. You also can use environment vari
 ## How to run with docker
 
     docker build . -t cinerama-stream
-    docker run -p 127.0.0.1:1232:1232 -d cinerama-stream
+    docker run -p 1232:1232 -d cinerama-stream
